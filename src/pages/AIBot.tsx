@@ -37,6 +37,7 @@ interface BotTradeResponse {
   win: boolean;
   delta: number;
   balance: number;
+  message?: string;
 }
 
 const PAIRS = ["XAU/USD (Gold)", "BTC/USD", "ETH/USD", "EUR/USD", "GBP/USD", "SOL/USD"];
@@ -70,80 +71,123 @@ export function AIBot() {
   const [sessions, setSessions] = useState(0);
   const [remaining, setRemaining] = useState(0);
   const [logs, setLogs] = useState<LogLine[]>([]);
+  const [tradeStarted, setTradeStarted] = useState(false);
+  const [pendingStake, setPendingStake] = useState(0);
+  const [startingBalance, setStartingBalance] = useState(Number(user?.balance ?? 0));
+  const [lastTradeResult, setLastTradeResult] = useState<string | null>(null);
 
   const termRef = useRef<HTMLDivElement>(null);
   const tradeBusyRef = useRef(false);
+  const mockFeedTimerRef = useRef<number | null>(null);
   const cfgRef = useRef({ pair, amount });
   cfgRef.current = { pair, amount };
 
   useEffect(() => {
-    setCurrentBalance(Number(user?.balance ?? 0));
-  }, [user?.balance]);
+    const balance = Number(user?.balance ?? 0);
+    setCurrentBalance(balance);
+    if (!tradeStarted) {
+      setStartingBalance(balance);
+    }
+  }, [user?.balance, tradeStarted]);
 
   useEffect(() => {
     if (status !== "running") return;
-
-    const tradeTimer = window.setInterval(async () => {
-      if (tradeBusyRef.current) return;
-
-      const amt = Number(cfgRef.current.amount) || 0;
-      if (amt <= 0) return;
-      if (currentBalance <= 0 || amt > currentBalance) {
-        setStatus("standby");
-        pushSystem("Insufficient balance for the next trade.");
-        return;
-      }
-
-      tradeBusyRef.current = true;
-      try {
-        const { data } = await api.post<BotTradeResponse>("/bot/trade", {
-          pair: cfgRef.current.pair,
-          amount: amt,
-        });
-
-        const now = new Date();
-        const line: LogLine = {
-          type: "trade",
-          time: `${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`,
-          side: data.side,
-          pair: data.pair,
-        };
-
-        setLogs((prev) => [...prev.slice(-39), line]);
-        setRunPL((prev) => prev + data.delta);
-        setCurrentBalance(data.balance);
-        updateBalance(data.balance);
-        if (data.win) setWins((prev) => prev + 1);
-        else setLosses((prev) => prev + 1);
-
-        if (data.balance <= 0 || amt > data.balance) {
-          setStatus("standby");
-          pushSystem("Session ended after the last trade closed.");
-        }
-      } catch (err) {
-        setError(apiError(err, "Could not execute bot trade"));
-        setStatus("standby");
-      } finally {
-        tradeBusyRef.current = false;
-      }
-    }, 2000);
 
     const countdownTimer = window.setInterval(() => {
       setRemaining((prev) => Math.max(0, prev - 1));
     }, 1000);
 
     return () => {
-      window.clearInterval(tradeTimer);
       window.clearInterval(countdownTimer);
     };
-  }, [status, currentBalance, updateBalance]);
+  }, [status]);
 
   useEffect(() => {
-    if (status === "running" && remaining === 0) {
-      setStatus("standby");
-      pushSystem("Session complete.");
-    }
-  }, [remaining, status]);
+    if (status !== "running" || !tradeStarted) return;
+
+    const sendMockTradeLine = () => {
+      const wait = 5000 + Math.floor(Math.random() * 5000);
+      mockFeedTimerRef.current = window.setTimeout(() => {
+        const side = Math.random() < 0.5 ? "BUY" : "SELL";
+        const now = new Date();
+        const time = `${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
+
+        const tradeLine: LogLine = {
+          type: "trade",
+          time,
+          side,
+          pair,
+        };
+
+        setLogs((prev) => [...prev.slice(-39), tradeLine]);
+        sendMockTradeLine();
+      }, wait);
+    };
+
+    sendMockTradeLine();
+    return () => {
+      if (mockFeedTimerRef.current !== null) {
+        window.clearTimeout(mockFeedTimerRef.current);
+      }
+    };
+  }, [status, tradeStarted, pair]);
+
+  useEffect(() => {
+    if (status !== "running" || remaining > 0 || !tradeStarted) return;
+
+    const settleTrade = async () => {
+      tradeBusyRef.current = true;
+      try {
+        const { data } = await api.post<BotTradeResponse>("/bot/trade", {
+          pair: pair,
+          amount: pendingStake,
+          phase: "settle",
+        });
+
+        const now = new Date();
+        const time = `${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
+        const tradeLine: LogLine = {
+          type: "trade",
+          time,
+          side: data.side,
+          pair: data.pair,
+        };
+
+        const resultText = data.win
+          ? `WIN +$${data.delta.toFixed(2)}`
+          : `LOSS -$${Math.abs(data.delta).toFixed(2)}`;
+
+        setLogs((prev) => [
+          ...prev.slice(-39),
+          tradeLine,
+          {
+            type: "system",
+            time,
+            text: resultText,
+          },
+        ]);
+        setLastTradeResult(resultText);
+        setRunPL(data.balance - startingBalance);
+        setCurrentBalance(data.balance);
+        updateBalance(data.balance);
+        if (data.win) setWins((prev) => prev + 1);
+        else setLosses((prev) => prev + 1);
+        setTradeStarted(false);
+        setPendingStake(0);
+        setStatus("standby");
+        pushSystem(data.message || "Trade settled");
+      } catch (err) {
+        setError(apiError(err, "Could not execute bot trade"));
+        setStatus("standby");
+        setTradeStarted(false);
+        setPendingStake(0);
+      } finally {
+        tradeBusyRef.current = false;
+      }
+    };
+
+    settleTrade();
+  }, [remaining, status, tradeStarted, pair, pendingStake, updateBalance]);
 
   useEffect(() => {
     if (termRef.current) {
@@ -163,7 +207,7 @@ export function AIBot() {
     ]);
   }
 
-  function start() {
+  async function start() {
     const amt = Number(amount) || 0;
     setError("");
 
@@ -179,21 +223,50 @@ export function AIBot() {
       setError("Trade amount cannot exceed account balance.");
       return;
     }
-
-    if (status === "paused") {
-      setStatus("running");
-      pushSystem("Session resumed.");
+    if (tradeStarted) {
+      setError("Trade is already in progress.");
       return;
     }
 
     setWins(0);
     setLosses(0);
     setRunPL(0);
+    setLastTradeResult(null);
     setLogs([]);
     setRemaining(duration);
     setSessions((prev) => prev + 1);
     setStatus("running");
+    setTradeStarted(true);
+    setPendingStake(amt);
+    setStartingBalance(currentBalance);
     pushSystem("AI engine initialized.");
+
+    tradeBusyRef.current = true;
+    try {
+      const { data } = await api.post<BotTradeResponse>("/bot/trade", {
+        pair,
+        amount: amt,
+        phase: "start",
+      });
+
+      setCurrentBalance(data.balance);
+      updateBalance(data.balance);
+      setLogs((prev) => [
+        ...prev.slice(-39),
+        {
+          type: "system",
+          time: `${pad(new Date().getHours())}:${pad(new Date().getMinutes())}:${pad(new Date().getSeconds())}`,
+          text: data.message || "Trade started and stake reserved",
+        },
+      ]);
+    } catch (err) {
+      setError(apiError(err, "Could not start bot trade"));
+      setStatus("standby");
+      setTradeStarted(false);
+      setPendingStake(0);
+    } finally {
+      tradeBusyRef.current = false;
+    }
   }
 
   function pause() {
@@ -257,6 +330,9 @@ export function AIBot() {
                 across {sessions} sessions · {wins}W / {losses}L
                 {running && ` · ${pad(Math.floor(remaining / 60))}:${pad(remaining % 60)} left`}
               </div>
+              {lastTradeResult && (
+                <div className="bot-meta bot-meta--small">Last result: {lastTradeResult}</div>
+              )}
             </div>
 
             <div className="bot-winring">
@@ -313,9 +389,7 @@ export function AIBot() {
               placeholder="Enter amount"
               onChange={(e) => setAmount(e.target.value)}
             />
-            <p className="muted" style={{ marginTop: "0.5rem", fontSize: "0.9rem" }}>
-              Wins pay 90% of the stake; losses lose the full stake.
-            </p>
+            
           </label>
 
           <label className="bot-field">
