@@ -25,11 +25,21 @@ export function ResetPassword() {
     }
     setBusy(true);
     try {
-      await api.post("/auth/reset-password", { email, otp, new_password: password });
+      await api.post("/auth/reset-password", {
+        email,
+        otp,
+        new_password: password,
+        confirm_password: confirm,
+      });
       setDone(true);
       setTimeout(() => navigate("/login"), 1800);
     } catch (err) {
-      setError(apiError(err, "Could not reset password"));
+      const message = apiError(err, "Could not reset password");
+      if (message.includes("expired")) {
+        setError("This OTP has expired. Please request a new password reset.");
+      } else {
+        setError(message);
+      }
     } finally {
       setBusy(false);
     }
