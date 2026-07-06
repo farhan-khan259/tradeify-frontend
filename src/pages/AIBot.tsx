@@ -313,6 +313,9 @@ export function AIBot() {
               placeholder="Enter amount"
               onChange={(e) => setAmount(e.target.value)}
             />
+            <p className="muted" style={{ marginTop: "0.5rem", fontSize: "0.9rem" }}>
+              Wins pay 90% of the stake; losses lose the full stake.
+            </p>
           </label>
 
           <label className="bot-field">

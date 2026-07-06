@@ -1,5 +1,5 @@
 import { NavLink, useNavigate } from "react-router-dom";
-import { ReactNode } from "react";
+import { ReactNode, useState } from "react";
 import {
   LayoutDashboard,
   ArrowDownToLine,
@@ -8,6 +8,8 @@ import {
   Users,
   Bot,
   LogOut,
+  Menu,
+  X,
 } from "lucide-react";
 import { Logo } from "./Logo";
 import { useAuth } from "../auth/AuthContext";
@@ -24,19 +26,33 @@ const navItems = [
 export function Layout({ children }: { children: ReactNode }) {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   function handleLogout() {
     logout();
     navigate("/login");
   }
 
+  function closeSidebar() {
+    setSidebarOpen(false);
+  }
+
   return (
-    <div className="app-shell">
-      <aside className="app-sidebar">
-        <div className="app-sidebar__brand">
-          <Logo />
+    <div className={`app-shell ${sidebarOpen ? "sidebar-open" : ""}`}>
+      <aside className={`app-sidebar ${sidebarOpen ? "is-open" : ""}`}>
+        <div className="app-sidebar__top">
+          <div className="app-sidebar__brand">
+            <Logo />
+          </div>
+          <button
+            type="button"
+            className="app-sidebar__toggle"
+            onClick={() => setSidebarOpen((prev) => !prev)}
+          >
+            {sidebarOpen ? <X size={20} /> : <Menu size={20} />}
+          </button>
         </div>
-        <nav className="app-nav">
+        <nav className="app-nav" onClick={closeSidebar}>
           {navItems.map((item) => (
             <NavLink
               key={item.to}
@@ -63,7 +79,8 @@ export function Layout({ children }: { children: ReactNode }) {
           </button>
         </div>
       </aside>
-      <main className="app-main">
+      {sidebarOpen && <div className="app-sidebar__backdrop" onClick={closeSidebar} />}
+      <main className="app-main" onClick={closeSidebar}>
         <div className="app-content">{children}</div>
       </main>
     </div>

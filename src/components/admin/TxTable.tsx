@@ -1,4 +1,5 @@
 import { Check, X } from "lucide-react";
+import { useState } from "react";
 import type { Transaction } from "../../types";
 
 const money = (n: number) =>
@@ -19,17 +20,10 @@ export function TxTable({
   onResolve,
   showScreenshotView,
 }: Props) {
+  const [screenshotUrl, setScreenshotUrl] = useState<string | null>(null);
+
   if (loading) return <p className="muted">Loading...</p>;
   if (rows.length === 0) return <p className="muted">{emptyText}</p>;
-
-  function viewScreenshot(data: string) {
-    const win = window.open("", "_blank", "noopener,noreferrer");
-    if (!win) return;
-    win.document.write(
-      `<html><head><title>Deposit Screenshot</title></head><body style="margin:0;background:#0a1628;display:grid;place-items:center;min-height:100vh;"><img src="${data}" style="max-width:100%;max-height:100vh;object-fit:contain;" /></body></html>`,
-    );
-    win.document.close();
-  }
 
   return (
     <div style={{ overflowX: "auto" }}>
@@ -63,7 +57,7 @@ export function TxTable({
                     <button
                       className="btn btn-ghost"
                       style={{ padding: "0.35rem 0.7rem" }}
-                      onClick={() => viewScreenshot(t.screenshot_data!)}
+                      onClick={() => setScreenshotUrl(t.screenshot_data!)}
                     >
                       View
                     </button>
@@ -100,6 +94,65 @@ export function TxTable({
           ))}
         </tbody>
       </table>
+
+      {screenshotUrl && (
+        <div
+          style={{
+            position: "fixed",
+            inset: 0,
+            background: "rgba(0,0,0,0.85)",
+            display: "grid",
+            placeItems: "center",
+            padding: "1rem",
+            zIndex: 9999,
+          }}
+          onClick={() => setScreenshotUrl(null)}
+        >
+          <div
+            style={{
+              position: "relative",
+              maxWidth: "100%",
+              maxHeight: "100%",
+              width: "min(90vw, 900px)",
+              background: "#0f172a",
+              borderRadius: "0.75rem",
+              boxShadow: "0 18px 50px rgba(0,0,0,0.55)",
+              overflow: "hidden",
+            }}
+            onClick={(event) => event.stopPropagation()}
+          >
+            <button
+              type="button"
+              onClick={() => setScreenshotUrl(null)}
+              style={{
+                position: "absolute",
+                top: "0.75rem",
+                right: "0.75rem",
+                zIndex: 1,
+                border: "none",
+                background: "rgba(255,255,255,0.08)",
+                color: "#fff",
+                padding: "0.5rem 0.75rem",
+                borderRadius: "999px",
+                cursor: "pointer",
+              }}
+            >
+              Close
+            </button>
+            <img
+              src={screenshotUrl}
+              alt="Deposit screenshot"
+              style={{
+                width: "100%",
+                height: "auto",
+                display: "block",
+                maxHeight: "90vh",
+                objectFit: "contain",
+              }}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 }

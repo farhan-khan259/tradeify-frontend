@@ -12,7 +12,7 @@ import { api, apiError } from "../api/client";
 import type { Transaction } from "../types";
 
 const MIN_DEPOSIT = 10;
-const PRESET_AMOUNTS = [100, 500, 1000, 5000];
+const PRESET_AMOUNTS = [10, 50, 100, 500 ,1000, 5000];
 const WALLET_ADDRESS = "TDhKxq4uPjg8Yb3wbLagUGF4vQp8HkJLzo";
 
 const money = (n: number) =>
@@ -39,7 +39,7 @@ export function Deposit() {
   const depositNote = useMemo(() => {
     const base = "USDT TRC20";
     const trimmedReference = reference.trim();
-    return trimmedReference ? `${base} | ${trimmedReference}` : base;
+    return trimmedReference ? `${base} | ${trimmedReference}` : "";
   }, [reference]);
 
   async function loadHistory() {
@@ -94,6 +94,16 @@ export function Deposit() {
   async function submitDeposit() {
     if (!amountIsValid) {
       setError(`Minimum deposit is ${money(MIN_DEPOSIT)}.`);
+      return;
+    }
+
+    if (!depositNote) {
+      setError("Transaction reference or note is required.");
+      return;
+    }
+
+    if (!screenshotData) {
+      setError("Upload the payment screenshot");
       return;
     }
 
@@ -284,12 +294,12 @@ export function Deposit() {
             </div>
 
             <label className="deposit-field">
-              <span>Transaction reference or note</span>
+              <span>Transaction reference or note (required)</span>
               <input
                 className="input"
                 value={reference}
                 maxLength={240}
-                placeholder="Optional: TXID, sender wallet, or any note"
+                placeholder="Enter TXID, sender wallet, or any note"
                 onChange={(e) => setReference(e.target.value)}
               />
             </label>
@@ -302,7 +312,10 @@ export function Deposit() {
                     type="file"
                     accept="image/png,image/jpeg,image/webp"
                     style={{ display: "none" }}
-                    onChange={onScreenshotChange}
+                    onChange={(event) => {
+                      setError("");
+                      onScreenshotChange(event);
+                    }}
                   />
                   {screenshotName ? "Replace Screenshot" : "Upload Screenshot"}
                 </label>

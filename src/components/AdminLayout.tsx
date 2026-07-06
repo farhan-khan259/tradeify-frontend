@@ -1,5 +1,5 @@
 import { NavLink, useNavigate } from "react-router-dom";
-import { ReactNode } from "react";
+import { ReactNode, useState } from "react";
 import {
   LayoutDashboard,
   Users,
@@ -7,6 +7,8 @@ import {
   ArrowUpFromLine,
   LogOut,
   ShieldCheck,
+  Menu,
+  X,
 } from "lucide-react";
 import { Logo } from "./Logo";
 import { useAuth } from "../auth/AuthContext";
@@ -21,17 +23,31 @@ const navItems = [
 export function AdminLayout({ children }: { children: ReactNode }) {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   function handleLogout() {
     logout();
     navigate("/admin/login");
   }
 
+  function closeSidebar() {
+    setSidebarOpen(false);
+  }
+
   return (
-    <div className="app-shell">
-      <aside className="app-sidebar">
-        <div className="app-sidebar__brand">
-          <Logo />
+    <div className={`app-shell ${sidebarOpen ? "sidebar-open" : ""}`}>
+      <aside className={`app-sidebar ${sidebarOpen ? "is-open" : ""}`}>
+        <div className="app-sidebar__top">
+          <div className="app-sidebar__brand">
+            <Logo />
+          </div>
+          <button
+            type="button"
+            className="app-sidebar__toggle"
+            onClick={() => setSidebarOpen((prev) => !prev)}
+          >
+            {sidebarOpen ? <X size={20} /> : <Menu size={20} />}
+          </button>
         </div>
         <div className="admin-badge">
           <ShieldCheck size={13} /> <span>ADMIN</span>
@@ -64,7 +80,8 @@ export function AdminLayout({ children }: { children: ReactNode }) {
           </button>
         </div>
       </aside>
-      <main className="app-main">
+      {sidebarOpen && <div className="app-sidebar__backdrop" onClick={closeSidebar} />}
+      <main className="app-main" onClick={closeSidebar}>
         <div className="app-content app-content--wide">{children}</div>
       </main>
     </div>
