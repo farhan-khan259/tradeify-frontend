@@ -28,6 +28,11 @@ type LogLine =
       time: string;
       side: "BUY" | "SELL";
       pair: string;
+    }
+  | {
+      type: "analysis";
+      time: string;
+      text: string;
     };
 
 interface BotTradeResponse {
@@ -119,32 +124,65 @@ export function AIBot() {
   useEffect(() => {
     if (status !== "running" || !tradeStarted) return;
 
-    const sendMockTradeLine = () => {
-      const wait = 5000 + Math.floor(Math.random() * 5000);
-      mockFeedTimerRef.current = window.setTimeout(() => {
-        const side = Math.random() < 0.5 ? "BUY" : "SELL";
-        const now = new Date();
-        const time = `${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
-
-        const tradeLine: LogLine = {
-          type: "trade",
-          time,
-          side,
-          pair,
-        };
-
-        setLogs((prev) => [...prev.slice(-39), tradeLine]);
-        sendMockTradeLine();
-      }, wait);
-    };
-
-    sendMockTradeLine();
-    return () => {
-      if (mockFeedTimerRef.current !== null) {
-        window.clearTimeout(mockFeedTimerRef.current);
+    const pollLogs = async () => {
+      try {
+        const { data } = await api.get("/bot/trade/status");
+        if (data.recent_logs && Array.isArray(data.recent_logs)) {
+          const newLogs: LogLine[] = data.recent_logs.map((log: string) => {
+            // Parse log format: "[HH:MM:SS] • message"
+            const timeMatch = log.match(/\[(\d{2}:\d{2}:\d{2})\]/);
+            const time = timeMatch ? timeMatch[1] : new Date().toTimeString().substring(0, 8);
+            const text = log.replace(/\[\d{2}:\d{2}:\d{2}\]\s*•\s*/, "").trim();
+            
+            // Detect trade execution lines (BUY/SELL)
+            if (text.includes("Entering BUY") || text.includes("Entering SELL")) {
+              const side = text.includes("BUY") ? "BUY" : "SELL";
+              return {
+                type: "trade" as const,
+                time,
+                side,
+                pair: cfgRef.current.pair,
+              };
+            }
+            
+            // Detect wins/losses
+            if (text.includes("Trade WON") || text.includes("Trade LOST")) {
+              return {
+                type: "system" as const,
+                time,
+                text,
+              };
+            }
+            
+            // All other logs are analysis logs
+            return {
+              type: "analysis" as const,
+              time,
+              text,
+            };
+          });
+          
+          setLogs((prev) => {
+            const combined = [...prev, ...newLogs];
+            // Deduplicate and keep last 50 lines
+            const seen = new Set<string>();
+            const deduped = combined.filter((log) => {
+              const key = `${log.type}-${log.time}-${(log as any).text || (log as any).pair}`;
+              if (seen.has(key)) return false;
+              seen.add(key);
+              return true;
+            });
+            return deduped.slice(-50);
+          });
+        }
+      } catch (err) {
+        // Silent error - just continue polling
       }
     };
-  }, [status, tradeStarted, pair]);
+
+    const pollInterval = window.setInterval(pollLogs, 1000);
+    return () => window.clearInterval(pollInterval);
+  }, [status, tradeStarted]);
 
   useEffect(() => {
     if (status !== "running" || remaining > 0 || !tradeStarted) return;
@@ -551,19 +589,28 @@ export function AIBot() {
                 <span>Live trade execution will stream here</span>
               </div>
             ) : (
-              logs.map((line, index) =>
-                line.type === "system" ? (
-                  <div key={`${line.time}-${index}`} className="bot-log bot-log--system">
-                    <span>[{line.time}]</span> {line.text}
-                  </div>
-                ) : (
-                  <div key={`${line.time}-${index}`} className="bot-log">
-                    <span className="bot-log__time">[{line.time}]</span>{" "}
-                    <span className="bot-log__side">{line.side}</span>{" "}
-                    {line.pair}
-                  </div>
-                ),
-              )
+              logs.map((line, index) => {
+                if (line.type === "system") {
+                  return (
+                    <div key={`${line.time}-${index}`} className="bot-log bot-log--system">
+                      <span>[{line.time}]</span> • {line.text}
+                    </div>
+                  );
+                } else if (line.type === "analysis") {
+                  return (
+                    <div key={`${line.time}-${index}`} className="bot-log bot-log--analysis">
+                      <span>[{line.time}]</span> • {line.text}
+                    </div>
+                  );
+                } else {
+                  return (
+                    <div key={`${line.time}-${index}`} className="bot-log bot-log--trade">
+                      <span className="bot-log__time">[{line.time}]</span> • 
+                      <span className="bot-log__side">{line.side}</span> {line.pair}
+                    </div>
+                  );
+                }
+              })
             )}
           </div>
         </section>

@@ -1033,6 +1033,17 @@ th { color: var(--muted); font-weight: 600; }
   color: #74849c;
 }
 
+.bot-log--analysis {
+  color: #8fa3bf;
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+
+.bot-log--trade {
+  color: #1cc2ff;
+  font-weight: 500;
+}
+
 .bot-log__time {
   color: #72819a;
 }
