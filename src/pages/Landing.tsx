@@ -326,7 +326,7 @@ export function Landing() {
         <Section style={{ padding: "2rem 1.5rem", display: "flex", justifyContent: "space-between", flexWrap: "wrap", gap: "1rem" }}>
           <Logo size={28} />
           <span className="muted" style={{ fontSize: "0.8rem" }}>
-            Demo platform — balances are simulated for testing. © {`${new Date().getFullYear()}`} Tradeify.
+            Trade smarter with real-time market insights. © {`${new Date().getFullYear()}`} Tradeify.
           </span>
         </Section>
       </footer>

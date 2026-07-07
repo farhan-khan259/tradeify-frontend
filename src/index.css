@@ -641,6 +641,102 @@ th { color: var(--muted); font-weight: 600; }
   letter-spacing: 0.12em;
 }
 
+/* Responsive Layout for Run P/L and Countdown */
+.bot-engine-card__body--flex {
+  display: flex !important;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1.5rem;
+  flex-wrap: nowrap;
+}
+
+.bot-engine-card__left {
+  flex: 1;
+}
+
+.bot-engine-card__right {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+/* Circular Countdown Timer */
+.bot-countdown-timer {
+  position: relative;
+  width: 100px;
+  height: 100px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.bot-countdown-timer__svg {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  transform: rotate(-90deg);
+}
+
+.bot-countdown-timer__bg {
+  fill: none;
+  stroke: #1f3450;
+  stroke-width: 3;
+}
+
+.bot-countdown-timer__progress {
+  fill: none;
+  stroke: url(#timerGradient);
+  stroke-width: 3;
+  stroke-linecap: round;
+  transition: stroke-dasharray 1s linear;
+}
+
+.bot-countdown-timer__content {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.bot-countdown-timer__time {
+  font-size: 1.4rem;
+  font-weight: 800;
+  color: #20b6ff;
+  font-family: 'Courier New', monospace;
+  letter-spacing: 0.05em;
+}
+
+/* Mobile Responsive */
+@media (max-width: 640px) {
+  .bot-engine-card__body--flex {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .bot-engine-card__left {
+    width: 100%;
+    min-width: 100%;
+  }
+
+  .bot-engine-card__right {
+    width: 100%;
+    justify-content: center;
+    margin-top: 0.5rem;
+  }
+
+  .bot-countdown-timer {
+    width: 80px;
+    height: 80px;
+  }
+
+  .bot-countdown-timer__time {
+    font-size: 1rem;
+  }
+}
+
 .bot-ready-banner {
   display: flex;
   align-items: center;

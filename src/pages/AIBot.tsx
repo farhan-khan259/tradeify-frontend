@@ -73,6 +73,7 @@ export function AIBot() {
   const [logs, setLogs] = useState<LogLine[]>([]);
   const [tradeStarted, setTradeStarted] = useState(false);
   const [pendingStake, setPendingStake] = useState(0);
+  const [stakeAmount, setStakeAmount] = useState(0);
   const [startingBalance, setStartingBalance] = useState(Number(user?.balance ?? 0));
   const [lastTradeResult, setLastTradeResult] = useState<string | null>(null);
 
@@ -101,6 +102,19 @@ export function AIBot() {
       window.clearInterval(countdownTimer);
     };
   }, [status]);
+
+  useEffect(() => {
+    if (status !== "running" || !tradeStarted) return;
+
+    const balanceRefreshInterval = window.setInterval(() => {
+      const balance = Number(user?.balance ?? 0);
+      setCurrentBalance(balance);
+    }, 2000);
+
+    return () => {
+      window.clearInterval(balanceRefreshInterval);
+    };
+  }, [status, tradeStarted, user?.balance]);
 
   useEffect(() => {
     if (status !== "running" || !tradeStarted) return;
@@ -167,13 +181,15 @@ export function AIBot() {
           },
         ]);
         setLastTradeResult(resultText);
-        setRunPL(data.balance - startingBalance);
+        // Use data.delta directly for accurate profit/loss calculation
+        setRunPL(data.delta);
         setCurrentBalance(data.balance);
         updateBalance(data.balance);
         if (data.win) setWins((prev) => prev + 1);
         else setLosses((prev) => prev + 1);
         setTradeStarted(false);
         setPendingStake(0);
+        setStakeAmount(0);
         setStatus("standby");
         pushSystem(data.message || "Trade settled");
       } catch (err) {
@@ -181,6 +197,7 @@ export function AIBot() {
         setStatus("standby");
         setTradeStarted(false);
         setPendingStake(0);
+        setStakeAmount(0);
       } finally {
         tradeBusyRef.current = false;
       }
@@ -238,7 +255,13 @@ export function AIBot() {
     setStatus("running");
     setTradeStarted(true);
     setPendingStake(amt);
-    setStartingBalance(currentBalance);
+    setStakeAmount(amt);
+    
+    // Immediately deduct the amount from balance (optimistic update)
+    const newBalance = currentBalance - amt;
+    setCurrentBalance(newBalance);
+    setStartingBalance(newBalance);
+    
     pushSystem("AI engine initialized.");
 
     tradeBusyRef.current = true;
@@ -261,9 +284,12 @@ export function AIBot() {
       ]);
     } catch (err) {
       setError(apiError(err, "Could not start bot trade"));
+      // Restore balance on error
+      setCurrentBalance(currentBalance + amt);
       setStatus("standby");
       setTradeStarted(false);
       setPendingStake(0);
+      setStakeAmount(0);
     } finally {
       tradeBusyRef.current = false;
     }
@@ -320,20 +346,54 @@ export function AIBot() {
             </div>
           </div>
 
-          <div className="bot-engine-card__body">
-            <div>
+          <div className="bot-engine-card__body bot-engine-card__body--flex">
+            <div className="bot-engine-card__left">
               <div className="bot-label">Run P/L</div>
               <div className={`bot-pl ${runPL > 0 ? "is-positive" : runPL < 0 ? "is-negative" : ""}`}>
                 {runPL >= 0 ? "+" : "-"}{money(Math.abs(runPL))}
               </div>
               <div className="bot-meta">
                 across {sessions} sessions · {wins}W / {losses}L
-                {running && ` · ${pad(Math.floor(remaining / 60))}:${pad(remaining % 60)} left`}
               </div>
               {lastTradeResult && (
                 <div className="bot-meta bot-meta--small">Last result: {lastTradeResult}</div>
               )}
             </div>
+
+            {running && remaining > 0 && (
+              <div className="bot-engine-card__right">
+                <div className="bot-countdown-timer">
+                  <svg className="bot-countdown-timer__svg" viewBox="0 0 120 120">
+                    <defs>
+                      <linearGradient id="timerGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" stopColor="#20b6ff" />
+                        <stop offset="100%" stopColor="#18bbff" />
+                      </linearGradient>
+                    </defs>
+                    <circle
+                      className="bot-countdown-timer__bg"
+                      cx="60"
+                      cy="60"
+                      r="54"
+                    />
+                    <circle
+                      className="bot-countdown-timer__progress"
+                      cx="60"
+                      cy="60"
+                      r="54"
+                      style={{
+                        strokeDasharray: `${(remaining / duration) * 339.29} 339.29`,
+                      }}
+                    />
+                  </svg>
+                  <div className="bot-countdown-timer__content">
+                    <div className="bot-countdown-timer__time">
+                      {pad(Math.floor(remaining / 60))}:{pad(remaining % 60)}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
 
             <div className="bot-winring">
               <div className="bot-winring__inner">
