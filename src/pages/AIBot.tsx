@@ -89,6 +89,54 @@ export function AIBot() {
   cfgRef.current = { pair, amount };
 
   useEffect(() => {
+    // On mount, try to restore any pending trade the backend knows about
+    const restorePending = async () => {
+      try {
+        const { data: pendingResp } = await api.get("/bot/trade/pending");
+        if (pendingResp && pendingResp.pending) {
+          const amt = Number(pendingResp.amount || 0);
+          const dur = Number(pendingResp.duration || duration);
+          const startedAt = pendingResp.started_at ? new Date(pendingResp.started_at) : null;
+          const elapsed = startedAt ? Math.floor((Date.now() - startedAt.getTime()) / 1000) : 0;
+          const remainingTime = Math.max(0, dur - elapsed);
+
+          setTradeStarted(true);
+          setPendingStake(amt);
+          setStakeAmount(amt);
+          setStatus(remainingTime > 0 ? "running" : "standby");
+          setRemaining(remainingTime);
+          pushSystem("Restored pending trade after reload");
+
+          // Refresh balance and session logs
+          try {
+            const { data: st } = await api.get("/bot/trade/status");
+            if (st && st.balance !== undefined && st.balance !== null) {
+              setCurrentBalance(Number(st.balance));
+              updateBalance(Number(st.balance));
+            } else {
+              // Don't overwrite with 0 — prefer the auth/user balance or keep current
+              const fallback = Number(user?.balance ?? currentBalance ?? 0);
+              setCurrentBalance(fallback);
+              // keep updateBalance only if we actually have a real user balance
+              if (user && user.balance !== undefined) updateBalance(Number(user.balance));
+            }
+            if (st && Array.isArray(st.recent_logs)) {
+              const recent = st.recent_logs.map((log: string) => ({ type: "analysis", time: "00:00:00", text: log } as LogLine));
+              setLogs((prev) => [...prev.slice(-39), ...recent].slice(-50));
+            }
+          } catch (e) {
+            // ignore
+          }
+        }
+      } catch (err) {
+        // ignore
+      }
+    };
+
+    restorePending();
+  }, []);
+
+  useEffect(() => {
     const balance = Number(user?.balance ?? 0);
     setCurrentBalance(balance);
     if (!tradeStarted) {
@@ -308,6 +356,7 @@ export function AIBot() {
         pair,
         amount: amt,
         phase: "start",
+        duration,
       });
 
       setCurrentBalance(data.balance);
