@@ -116,7 +116,7 @@ export function Landing() {
               <Zap size={15} color="var(--accent)" /> Empowering Your Trading Journey
             </div>
             <h1 style={{ fontSize: "clamp(2.2rem, 5vw, 3.4rem)", lineHeight: 1.1 }}>
-              Trade smarter with <span className="gradient-text">Tradeify</span>
+              Trade smartor with <span className="gradient-text">Tradeify</span>
             </h1>
             <p className="muted" style={{ fontSize: "1.15rem", maxWidth: 520, margin: "1.2rem 0 2rem" }}>
               A clean, fast platform to grow and track your trading — real-time markets,
