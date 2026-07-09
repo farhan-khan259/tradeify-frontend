@@ -4,8 +4,8 @@ import { api, apiError } from "../api/client";
 import { useAuth } from "../auth/AuthContext";
 import type { Transaction } from "../types";
 
-const MIN_WITHDRAWAL = 10;
-const WITHDRAW_PRESETS = [25, 50, 100, 250];
+const MIN_WITHDRAWAL = 100;
+const WITHDRAW_PRESETS = [100, 250, 500, 1000];
 
 const money = (n: number) =>
   `$${Number(n).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;

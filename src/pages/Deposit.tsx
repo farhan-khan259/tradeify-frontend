@@ -11,8 +11,8 @@ import {
 import { api, apiError } from "../api/client";
 import type { Transaction } from "../types";
 
-const MIN_DEPOSIT = 10;
-const PRESET_AMOUNTS = [10, 50, 100, 500 ,1000, 5000];
+const MIN_DEPOSIT = 50;
+const PRESET_AMOUNTS = [50, 100, 500, 1000, 5000];
 const WALLET_ADDRESS = "TDhKxq4uPjg8Yb3wbLagUGF4vQp8HkJLzo";
 
 const money = (n: number) =>
