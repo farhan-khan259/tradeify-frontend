@@ -192,6 +192,8 @@ export function Withdraw() {
             />
           </label>
 
+          <p className="muted">Note: Withdrawals will be received within 24-48 hours.</p>
+
           {error && <p className="error">{error}</p>}
 
           <button
