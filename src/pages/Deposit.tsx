@@ -13,7 +13,7 @@ import type { Transaction } from "../types";
 
 const MIN_DEPOSIT = 50;
 const PRESET_AMOUNTS = [50, 100, 500, 1000, 5000];
-const WALLET_ADDRESS = "TFFo5uUZZGTH75MAqBmSbJr66js65bc4Bi";
+const WALLET_ADDRESS = "TFEnwGWNtPo7c5i6X681hnCuLwZhJFvfza";
 
 const money = (n: number) =>
   `$${Number(n).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
