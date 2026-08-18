@@ -60,7 +60,9 @@ function pad(n: number) {
   return n.toString().padStart(2, "0");
 }
 
-export function AIBot() {
+type BotVariant = "standard" | "basic-funded" | "pro-funded" | "basic-ai" | "pro-ai";
+
+export function AIBot({ title = "Free AI Trading Bot", variant = "standard" }: { title?: string; variant?: BotVariant }) {
   const { user, updateBalance } = useAuth();
   const [currentBalance, setCurrentBalance] = useState(Number(user?.balance ?? 0));
 
@@ -407,9 +409,9 @@ export function AIBot() {
   }[status];
 
   return (
-    <div className="bot-page bot-page--sim">
-      <div className="bot-shell">
-        <h1 className="bot-shell__title">AI Trading Bot</h1>
+    <div className={`bot-page bot-page--sim bot-page--${variant}`}>
+      <div className={`bot-shell bot-shell--${variant}`}>
+        <h1 className="bot-shell__title">{title}</h1>
 
         <section className="card bot-engine-card">
           <div className="bot-engine-card__top">

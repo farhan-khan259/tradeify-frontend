@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, ReactNode } from "react";
+import { createContext, useContext, useEffect, useState, ReactNode, SetStateAction } from "react";
 import { api, setToken } from "../api/client";
 import type { User } from "../types";
 
@@ -10,6 +10,8 @@ interface AuthState {
   logout: () => void;
   refresh: () => Promise<User | null>;
   updateBalance: (balance: number) => void;
+  updatePurchasedBots: (purchasedBotIds: string[]) => void;
+  setWalletBalance: (balance: SetStateAction<number>) => void;
 }
 
 interface RegisterData {
@@ -64,8 +66,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser((prev) => (prev ? { ...prev, balance } : prev));
   }
 
+  function updatePurchasedBots(purchasedBotIds: string[]) {
+    setUser((prev) => (prev ? { ...prev, purchased_bot_ids: purchasedBotIds } : prev));
+  }
+
+  // Shared wallet setter used by flows that need an atomic balance update.
+  function setWalletBalance(nextBalance: SetStateAction<number>) {
+    setUser((prev) => {
+      if (!prev) return prev;
+      const balance = typeof nextBalance === "function"
+        ? nextBalance(Number(prev.balance ?? 0))
+        : nextBalance;
+      return { ...prev, balance };
+    });
+  }
+
   return (
-    <AuthContext.Provider value={{ user, loading, login, register, logout, refresh, updateBalance }}>
+    <AuthContext.Provider value={{ user, loading, login, register, logout, refresh, updateBalance, updatePurchasedBots, setWalletBalance }}>
       {children}
     </AuthContext.Provider>
   );

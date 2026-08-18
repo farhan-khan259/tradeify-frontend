@@ -18,7 +18,11 @@ const navItems = [
   { to: "/dashboard", label: "Dashboard", Icon: LayoutDashboard },
   { to: "/deposit", label: "Deposit", Icon: ArrowDownToLine },
   { to: "/withdraw", label: "Withdraw", Icon: ArrowUpFromLine },
-  { to: "/bot", label: "AI Bot", Icon: Bot },
+  { to: "/bot", label: "Free AI Bot", Icon: Bot },
+  { to: "/bot/basic-funded", label: "Basic Funded AI Bot", Icon: Bot },
+  { to: "/bot/pro-funded", label: "Pro Funded AI Bot", Icon: Bot },
+  { to: "/bot/basic-bot", label: "Basic AI Trading Bot", Icon: Bot },
+  { to: "/bot/pro-bot", label: "Pro AI Trading Bot", Icon: Bot },
   { to: "/transactions", label: "Transactions", Icon: Receipt },
   { to: "/referrals", label: "Referrals", Icon: Users },
 ];
@@ -57,6 +61,7 @@ export function Layout({ children }: { children: ReactNode }) {
             <NavLink
               key={item.to}
               to={item.to}
+              end={item.to === "/bot"}
               className="app-nav__link"
               style={({ isActive }) => ({
                 color: isActive ? "#06121f" : "var(--text)",

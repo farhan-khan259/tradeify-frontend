@@ -1,21 +1,22 @@
 export interface User {
-  id: number;
+  id: string;
   email: string;
   full_name: string;
   is_active: boolean;
   is_admin: boolean;
   balance: number;
+  purchased_bot_ids: string[];
   referral_code: string;
   created_at: string;
-  referred_by_id?: number | null;
+  referred_by_id?: string | null;
 }
 
 export type TransactionType = "deposit" | "withdrawal" | "referral_bonus";
 export type TransactionStatus = "pending" | "approved" | "rejected";
 
 export interface Transaction {
-  id: number;
-  user_id: number;
+  id: string;
+  user_id: string;
   type: TransactionType;
   status: TransactionStatus;
   amount: number;

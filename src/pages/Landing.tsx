@@ -1,6 +1,6 @@
 import { FormEvent, useState } from "react";
 import { Link } from "react-router-dom";
-import { TrendingUp, Wallet, Users, LayoutDashboard, Zap, ShieldCheck, Mail, Send, AlertCircle } from "lucide-react";
+import { TrendingUp, Wallet, Users, LayoutDashboard, Zap, ShieldCheck, Mail, Send } from "lucide-react";
 import { Logo } from "../components/Logo";
 import { MarketTicker } from "../components/MarketTicker";
 import { HeroChart } from "../components/HeroChart";
@@ -87,22 +87,6 @@ export function Landing() {
       {/* Live market ticker */}
       <div id="markets" style={{ scrollMarginTop: 70 }}>
         <MarketTicker />
-      </div>
-
-      {/* Bot Maintenance Banner */}
-      <div style={{
-        background: "linear-gradient(135deg, rgba(239,68,68,0.15), rgba(249,115,22,0.1))",
-        borderBottom: "1px solid rgba(239,68,68,0.3)",
-        padding: "1rem 1.5rem",
-      }}>
-        <Section style={{ display: "flex", alignItems: "center", gap: "1rem", padding: 0 }}>
-          <AlertCircle size={20} color="var(--accent)" style={{ color: "#ef4444", flexShrink: 0 }} />
-          <div>
-            <p style={{ margin: 0, fontSize: "0.95rem", color: "#fca5a5" }}>
-              <strong>Bot under maintenance</strong> — The AI trading bot is currently undergoing updates. We'll be back online shortly.
-            </p>
-          </div>
-        </Section>
       </div>
 
       {/* Hero */}

@@ -60,7 +60,7 @@ export function Dashboard() {
 
   return (
     <div className="dashboard-page">
-      <h1 className="dashboard-page__title">Dashboard</h1>
+      <h1 className="dashboard-page__title">Wallet</h1>
 
       <MarketTicker />
 
