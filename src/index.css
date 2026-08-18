@@ -2536,6 +2536,16 @@ th { color: var(--muted); font-weight: 600; }
 .bot-purchase-success__card h2 { margin: .8rem 0 .5rem; }
 .bot-purchase-success__card p { margin: 0 0 1.4rem; color: var(--muted); }
 
+.account-protection-modal { position: fixed; inset: 0; z-index: 2100; display: grid; place-items: center; padding: 1rem; background: rgba(0, 0, 0, .7); }
+.account-protection-modal__card { width: min(460px, 100%); padding: 2rem; border: 1px solid rgba(255, 190, 78, .35); border-radius: 20px; background: linear-gradient(160deg, #152237, #0d1728); box-shadow: 0 24px 70px rgba(0,0,0,.5); }
+.account-protection-modal__icon { display: grid; place-items: center; width: 56px; height: 56px; margin-bottom: 1rem; color: #ffcb59; border-radius: 16px; background: rgba(255, 190, 78, .12); }
+.account-protection-modal__eyebrow { margin: 0; color: #ffcb59; font-size: .75rem; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; }
+.account-protection-modal__card h2 { margin: .45rem 0 .9rem; font-size: 1.45rem; }
+.account-protection-modal__card p { color: var(--muted); line-height: 1.6; }
+.account-protection-modal__card strong { color: #fff; }
+.account-protection-modal__actions { display: flex; justify-content: flex-end; gap: .75rem; margin-top: 1.5rem; }
+@media (max-width: 480px) { .account-protection-modal__card { padding: 1.5rem; } .account-protection-modal__actions { flex-direction: column-reverse; } .account-protection-modal__actions .btn { width: 100%; } }
+
 @media (max-width: 600px) {
   .bot-marketplace__heading { flex-direction: column; }
   .bot-marketplace__grid { grid-template-columns: 1fr; }

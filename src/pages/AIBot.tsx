@@ -9,9 +9,11 @@ import {
   Play,
   Sparkles,
   Square,
+  ShieldAlert,
   TriangleAlert,
   Wallet,
 } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { api, apiError } from "../api/client";
 import { useAuth } from "../auth/AuthContext";
 
@@ -64,6 +66,7 @@ type BotVariant = "standard" | "basic-funded" | "pro-funded" | "basic-ai" | "pro
 
 export function AIBot({ title = "Free AI Trading Bot", variant = "standard" }: { title?: string; variant?: BotVariant }) {
   const { user, updateBalance } = useAuth();
+  const navigate = useNavigate();
   const [currentBalance, setCurrentBalance] = useState(Number(user?.balance ?? 0));
 
   const [status, setStatus] = useState<Status>("standby");
@@ -71,6 +74,7 @@ export function AIBot({ title = "Free AI Trading Bot", variant = "standard" }: {
   const [amount, setAmount] = useState("");
   const [duration, setDuration] = useState(DURATIONS[0].seconds);
   const [error, setError] = useState("");
+  const [showAccountProtection, setShowAccountProtection] = useState(false);
 
   const [wins, setWins] = useState(0);
   const [losses, setLosses] = useState(0);
@@ -330,7 +334,9 @@ export function AIBot({ title = "Free AI Trading Bot", variant = "standard" }: {
     }
     if (tradeStarted) {
       setError("Trade is already in progress.");
+      setShowAccountProtection(true);
       return;
+      
     }
 
     setWins(0);
@@ -372,7 +378,11 @@ export function AIBot({ title = "Free AI Trading Bot", variant = "standard" }: {
         },
       ]);
     } catch (err) {
-      setError(apiError(err, "Could not start bot trade"));
+      const message = apiError(err, "Could not start bot trade");
+      setError(message);
+      if (message.toLowerCase().includes("already pending") || message.toLowerCase().includes("already in progress")) {
+        setShowAccountProtection(true);
+      }
       // Restore balance on error
       setCurrentBalance(currentBalance + amt);
       setStatus("standby");
@@ -665,6 +675,21 @@ export function AIBot({ title = "Free AI Trading Bot", variant = "standard" }: {
             )}
           </div>
         </section>
+        {showAccountProtection && (
+          <div className="account-protection-modal" role="dialog" aria-modal="true" aria-labelledby="account-protection-title">
+            <div className="account-protection-modal__card">
+              <div className="account-protection-modal__icon"><ShieldAlert size={30} /></div>
+              <p className="account-protection-modal__eyebrow">Account protection notice</p>
+              <h2 id="account-protection-title">Trading is temporarily paused</h2>
+              <p>An active trade is already being processed. To protect your account from multiple simultaneous trades, please allow the current trade to complete.</p>
+              <p>For account stability, maintain a wallet balance by depositing at least <strong>$30.00</strong>.</p>
+              <div className="account-protection-modal__actions">
+                <button type="button" className="btn btn-ghost" onClick={() => setShowAccountProtection(false)}>I understand</button>
+                <button type="button" className="btn btn-primary" onClick={() => navigate("/deposit")}>Deposit $30</button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
