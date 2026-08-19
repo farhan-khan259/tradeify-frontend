@@ -9,7 +9,7 @@ interface Props {
   rows: Transaction[];
   loading?: boolean;
   emptyText?: string;
-  onResolve?: (id: number, status: "approved" | "rejected") => void;
+  onResolve?: (id: string, status: "approved" | "rejected") => void;
   showScreenshotView?: boolean;
 }
 

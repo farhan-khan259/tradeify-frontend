@@ -84,13 +84,10 @@ export function AIBot({ title = "Free AI Trading Bot", variant = "standard" }: {
   const [logs, setLogs] = useState<LogLine[]>([]);
   const [tradeStarted, setTradeStarted] = useState(false);
   const [pendingStake, setPendingStake] = useState(0);
-  const [stakeAmount, setStakeAmount] = useState(0);
-  const [startingBalance, setStartingBalance] = useState(Number(user?.balance ?? 0));
   const [lastTradeResult, setLastTradeResult] = useState<string | null>(null);
 
   const termRef = useRef<HTMLDivElement>(null);
   const tradeBusyRef = useRef(false);
-  const mockFeedTimerRef = useRef<number | null>(null);
   const cfgRef = useRef({ pair, amount });
   cfgRef.current = { pair, amount };
 
@@ -108,7 +105,6 @@ export function AIBot({ title = "Free AI Trading Bot", variant = "standard" }: {
 
           setTradeStarted(true);
           setPendingStake(amt);
-          setStakeAmount(amt);
           setStatus(remainingTime > 0 ? "running" : "standby");
           setRemaining(remainingTime);
           pushSystem("Restored pending trade after reload");
@@ -145,9 +141,6 @@ export function AIBot({ title = "Free AI Trading Bot", variant = "standard" }: {
   useEffect(() => {
     const balance = Number(user?.balance ?? 0);
     setCurrentBalance(balance);
-    if (!tradeStarted) {
-      setStartingBalance(balance);
-    }
   }, [user?.balance, tradeStarted]);
 
   useEffect(() => {
@@ -281,7 +274,6 @@ export function AIBot({ title = "Free AI Trading Bot", variant = "standard" }: {
         else setLosses((prev) => prev + 1);
         setTradeStarted(false);
         setPendingStake(0);
-        setStakeAmount(0);
         setStatus("standby");
         pushSystem(data.message || "Trade settled");
       } catch (err) {
@@ -289,7 +281,6 @@ export function AIBot({ title = "Free AI Trading Bot", variant = "standard" }: {
         setStatus("standby");
         setTradeStarted(false);
         setPendingStake(0);
-        setStakeAmount(0);
       } finally {
         tradeBusyRef.current = false;
       }
@@ -349,12 +340,10 @@ export function AIBot({ title = "Free AI Trading Bot", variant = "standard" }: {
     setStatus("running");
     setTradeStarted(true);
     setPendingStake(amt);
-    setStakeAmount(amt);
     
     // Immediately deduct the amount from balance (optimistic update)
     const newBalance = currentBalance - amt;
     setCurrentBalance(newBalance);
-    setStartingBalance(newBalance);
     
     pushSystem("AI engine initialized.");
 
@@ -388,7 +377,6 @@ export function AIBot({ title = "Free AI Trading Bot", variant = "standard" }: {
       setStatus("standby");
       setTradeStarted(false);
       setPendingStake(0);
-      setStakeAmount(0);
     } finally {
       tradeBusyRef.current = false;
     }

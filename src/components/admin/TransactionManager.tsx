@@ -41,7 +41,7 @@ export function TransactionManager({
     load();
   }, [load]);
 
-  async function resolve(id: number, status: "approved" | "rejected") {
+  async function resolve(id: string, status: "approved" | "rejected") {
     setError("");
     try {
       await api.post(`/admin/transactions/${id}/resolve`, { status });
