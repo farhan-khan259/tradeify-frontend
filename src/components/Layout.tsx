@@ -7,6 +7,7 @@ import {
   Receipt,
   Users,
   Bot,
+  Headset,
   LogOut,
   Menu,
   X,
@@ -19,13 +20,15 @@ const navItems = [
   { to: "/deposit", label: "Deposit", Icon: ArrowDownToLine },
   { to: "/withdraw", label: "Withdraw", Icon: ArrowUpFromLine },
   { to: "/bot", label: "Free AI Bot", Icon: Bot },
-  { to: "/bot/basic-funded", label: "Basic Funded AI Bot", Icon: Bot },
-  { to: "/bot/pro-funded", label: "Pro Funded AI Bot", Icon: Bot },
   { to: "/bot/basic-bot", label: "Basic AI Trading Bot", Icon: Bot },
   { to: "/bot/pro-bot", label: "Pro AI Trading Bot", Icon: Bot },
+  { to: "/bot/basic-funded", label: "Basic Funded AI Bot", Icon: Bot },
+  { to: "/bot/pro-funded", label: "Pro Funded AI Bot", Icon: Bot },
   { to: "/transactions", label: "Transactions", Icon: Receipt },
   { to: "/referrals", label: "Referrals", Icon: Users },
 ];
+
+const customerServiceUrl = "https://t.me/TradiefySupport";
 
 export function Layout({ children }: { children: ReactNode }) {
   const { user, logout } = useAuth();
@@ -72,6 +75,16 @@ export function Layout({ children }: { children: ReactNode }) {
               <span>{item.label}</span>
             </NavLink>
           ))}
+          <a
+            href={customerServiceUrl}
+            target="_blank"
+            rel="noreferrer"
+            className="app-nav__link"
+            title="Contact customer service on Telegram"
+          >
+            <Headset size={18} />
+            <span>Customer Service</span>
+          </a>
         </nav>
         <div className="app-sidebar__footer">
           <div className="muted app-sidebar__email">{user?.email}</div>
